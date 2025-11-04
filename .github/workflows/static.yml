@@ -1,34 +1,43 @@
-name: Deploy branch to GitHub Pages
+name: Deploy Pages
 
 on:
+  workflow_dispatch:
   push:
     branches:
-      - 'kp[0-9]*'
-  workflow_dispatch:
+      - 'kp[0-9]+'
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: "pages"
+  cancel-in-progress: true
 
 jobs:
   deploy:
     runs-on: ubuntu-latest
-
-    permissions:
-      contents: write
-      pages: write
-
     steps:
-      - name: Checkout repository
+      - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Prepare deployment folder
-        run: |
-          mkdir -p ./dist
-          cp -r * ./dist
-          # уберём служебную папку .git, чтобы не попала в публикацию
-          rm -rf ./dist/.git
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build
+        run: npm run build
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist   # путь до собранного проекта
 
       - name: Deploy to GitHub Pages
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./dist
-          destination_dir: ${{ github.ref_name }}
+        id: deployment
+        uses: actions/deploy-pages@v4
