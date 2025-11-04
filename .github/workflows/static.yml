@@ -27,16 +27,13 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Prepare artifact
-        run: |
-          mkdir public
-          cp -r * public
-          echo '<meta http-equiv="refresh" content="0; url=index.html">' > public/404.html
+      - name: Create redirect
+        run: echo '<meta http-equiv="refresh" content="0; url=index.html">' > 404.html
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
         with:
-          path: public
+          path: .
 
       - name: Deploy to GitHub Pages
         id: deployment
