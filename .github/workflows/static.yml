@@ -1,4 +1,4 @@
-name: Deploy static site
+name: Deploy static site per branch
 
 on:
   workflow_dispatch:
@@ -7,7 +7,7 @@ on:
       - 'kp[0-9]+'
 
 permissions:
-  contents: read
+  contents: write
   pages: write
   id-token: write
 
@@ -17,24 +17,23 @@ concurrency:
 
 jobs:
   deploy:
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-
     runs-on: ubuntu-latest
 
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Create redirect
-        run: echo '<meta http-equiv="refresh" content="0; url=index.html">' > 404.html
-
-      - name: Upload artifact
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: .
+      - name: Prepare deployment
+        run: |
+          branch="${GITHUB_REF_NAME}"
+          mkdir -p dist/$branch
+          shopt -s extglob
+          cp -r !(.git|.github|dist) dist/$branch
+          echo '<meta http-equiv="refresh" content="0; url=index.html">' > dist/$branch/404.html
 
       - name: Deploy to GitHub Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_branch: gh-pages
+          publish_dir: dist
