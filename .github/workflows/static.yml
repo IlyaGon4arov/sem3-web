@@ -27,7 +27,12 @@ jobs:
         run: |
           branch="${GITHUB_REF_NAME}"
           mkdir -p dist/$branch
-          cp -r * dist/$branch
+          # Копируем всё, кроме .git, .github и dist
+          find . -maxdepth 1 \
+            ! -path './.git' \
+            ! -path './.github' \
+            ! -path './dist' \
+            -exec cp -r {} dist/$branch/ \;
           echo '<meta http-equiv="refresh" content="0; url=index.html">' > dist/$branch/404.html
 
       - name: Deploy to GitHub Pages
